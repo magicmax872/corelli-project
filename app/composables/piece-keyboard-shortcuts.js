@@ -11,15 +11,17 @@ export function useScoreKeyboardShortcuts(options = {}) {
     const localePath = useLocalePath();
 
     const { prevPiece, nextPiece } = options ?? {};
+    const prev = computed(() => unref(prevPiece));
+    const next = computed(() => unref(nextPiece));
 
     onKeyStroke('ArrowLeft', () => {
-        if (ignoreIfInput() || !prevPiece) return;
-        navigateTo(localePath({ name: 'piece-id', params: { id: prevPiece.slug }, hash: route.hash }));
+        if (ignoreIfInput() || !prev.value) return;
+        navigateTo(localePath({ name: 'piece-id', params: { id: prev.value.slug }, hash: route.hash }));
     });
 
     onKeyStroke('ArrowRight', () => {
-        if (ignoreIfInput() || !nextPiece) return;
-        navigateTo(localePath({ name: 'piece-id', params: { id: nextPiece.slug }, hash: route.hash }));
+        if (ignoreIfInput() || !next.value) return;
+        navigateTo(localePath({ name: 'piece-id', params: { id: next.value.slug }, hash: route.hash }));
     });
 
     onKeyStroke('c', () => {
@@ -35,6 +37,11 @@ export function useScoreKeyboardShortcuts(options = {}) {
     onKeyStroke('m', () => {
         if (ignoreIfInput()) return;
         scoreOptions.showModulations = !scoreOptions.showModulations;
+    });
+
+    onKeyStroke('h', () => {
+        if (ignoreIfInput()) return;
+        scoreOptions.showHorizontalViewMode = !scoreOptions.showHorizontalViewMode;
     });
 
     onKeyStroke('+', () => {

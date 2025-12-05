@@ -1,13 +1,17 @@
 <script setup>
-const { data } = await useAsyncData('pieces', () => queryCollection('pieces').all());
+const { data: allPieces } = await useAsyncData('all-pieces', () => queryCollection('pieces').all());
+const { data: filteredPieces } = await useAsyncDataPiecesCollection();
+const { data: countPieces } = await useAsyncDataCountPieces();
 
 const { t } = useI18n();
 const localePath = useLocalePath();
 
-const { filteredElements } = usePieceFilter(data.value);
-
 const pieces = computed(() => {
-    return filteredElements.value.map(item => ({
+    // TODO workaround to solve problems where the linker in nuxt generate does
+    // not have access to all pieces because useAsyncDataPiecesCollection is
+    // server=false because of nuxt generate issues
+    const base = filteredPieces.value ?? allPieces.value ?? [];
+    return base.map(item => ({
         // composer: item.composer,
         key: item.key,
         // largerWorkTitle: item.largerWorkTitle,
@@ -44,7 +48,7 @@ const { localScoreUrlGenerator, vhvScoreUrlGenerator } = useScoreUrlGenerator();
             <Heading>{{ $t('pieces') }}</Heading>
             <PieceFilter />
             <div>
-                {{ pieces.length }} / {{ data.length }}
+                {{ pieces.length }} / {{ countPieces }}
             </div>
             <UTable :data="pieces" :columns="columns" :get-row-id="(item) => item.slug" class="mt-8">
                 <template #audio-cell="{ row }">

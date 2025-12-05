@@ -1,19 +1,37 @@
 export function useScoreFormatter() {
 
     const { localScoreUrlGenerator } = useScoreUrlGenerator();
-    const scoreData = ref(null);
+    const scoreOptions = useScoreOptions();
+    const rawScoreData = ref(null);
+    const formattedScoreData = ref(null);
+    const currentId = ref(null);
+    const currentFilters = ref(null);
 
-    async function loadScoreData(id, hightlightLineNumbers = [], filters = []) {
-        scoreData.value = null;
+    watch(() => scoreOptions.showDcmlAnnotations, async (newValue) => {
+        rawScoreData.value = null;
+        await loadScore(currentId.value, currentFilters.value)
+    });
 
-        const data = await $fetch(localScoreUrlGenerator(id), {
-            parseResponse: (txt) => txt,
-        });
+    async function loadScore(id, filters) {
+        currentId.value = id;
+        currentFilters.value = filters;
+        if (!rawScoreData.value) {
+            const data = await $fetch(localScoreUrlGenerator(id, scoreOptions.showDcmlAnnotations), {
+                parseResponse: (txt) => txt,
+            });
+            rawScoreData.value = data;
+        }
+        applyScoreFormatting([], filters);
+        return rawScoreData.value;
+    }
 
-        const lines = data.split('\n');
- 
+    function applyScoreFormatting(highlightLineNumbers = [], filters = []) {
+        if (!rawScoreData.value) return null;
+
+        const lines = rawScoreData.value.split('\n');
+
         for (let i = 0; i < lines.length; i++) {
-            if (hightlightLineNumbers.includes(i + 1)) {
+            if (highlightLineNumbers.includes(i + 1)) {
                 const tokens = lines[i].split('\t');
                 tokens.forEach((_, tokenIndex) => {
                     const resolvedLineIndex = getResolvedTokenLineIndex(i, tokenIndex, lines);
@@ -32,24 +50,23 @@ export function useScoreFormatter() {
             }
         }
 
-        if (hightlightLineNumbers.length) {
+        if (highlightLineNumbers.length) {
             lines.push('!!!RDF**kern: @ = marked note color="#ef4444"');
         }
-
         if (filters.length) {
-            filters.forEach((filter) => {
-                lines.push(`!!!filter: ${filter}`);
-            });
+            filters.forEach(filter => lines.push(`!!!filter: ${filter}`));
         }
 
-        scoreData.value = lines.join('\n');
-        return scoreData.value;
+        formattedScoreData.value = lines.join('\n');
+        return formattedScoreData.value;
     }
 
     return {
-        scoreData,
-        loadScoreData,
-    }
+        rawScoreData,
+        formattedScoreData,
+        loadScore,
+        applyScoreFormatting,
+    };
 }
 
 function tokenIsDataRecord(line, includeNullToken = false) {

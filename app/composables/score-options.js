@@ -1,26 +1,5 @@
 import { defineStore, acceptHMRUpdate } from 'pinia';
 
-function createDefaultPieceFilterOptions() {
-    return {
-        title: [],
-        tempo: [],
-        key: [],
-        meter: [],
-        op: [],
-        nr: [],
-    };
-};
-
-export const usePieceFilterOptions = defineStore('piece_filter_options', {
-    state: () => (createDefaultPieceFilterOptions()),
-    actions: {
-        reset() {
-            this.$patch(createDefaultPieceFilterOptions());
-        },
-    },
-});
-
-
 function createDefaultScoreOptions() {
     return {
         showMeter: false,
@@ -34,6 +13,8 @@ function createDefaultScoreOptions() {
         hideInstrumentNames: false,
         showIntervallsatz: false,
         verovioScale: 40,
+        showHorizontalViewMode: false,
+        showDcmlAnnotations: false,
     };
 }
 
@@ -66,10 +47,17 @@ export const useScoreOptions = defineStore('score_options', {
                 state.showCadences,
                 state.showModulations,
                 state.showModulationsDegLabel,
+                state.showSequences,
             ].filter(Boolean).length;
         },
+        countOthers(state) {
+            return [
+                state.showDcmlAnnotations,
+                state.showHorizontalViewMode,
+            ].filter(Boolean).length; 
+        },
         countTotal() {
-            return this.countHumdrumFilters + this.countHighlights;
+            return this.countHumdrumFilters + this.countHighlights + this.countOthers;
         },
     },
 
@@ -96,6 +84,7 @@ export const useScoreOptions = defineStore('score_options', {
         resetVerovio() {
             const defaults = createDefaultScoreOptions();
             this.verovioScale = defaults.verovioScale;
+            this.showHorizontalViewMode = defaults.showHorizontalViewMode;
         },
         resetHighlights() {
             const defaults = createDefaultScoreOptions();
@@ -103,6 +92,10 @@ export const useScoreOptions = defineStore('score_options', {
             this.showSequences = defaults.showSequences;
             this.showModulations = defaults.showModulations;
             this.showModulationsDegLabel = defaults.showModulationsDegLabel;
+        },
+        resetDcmlOptions() {
+            const defaults = createDefaultScoreOptions();
+            this.showDcmlAnnotations = defaults.showDcmlAnnotations;
         },
     },
 });

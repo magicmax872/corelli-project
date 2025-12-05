@@ -1,13 +1,15 @@
 <script setup>
-const { data: cadencesData } = await useAsyncData('cadences', () => queryCollection('cadences').first(), {
-    deep: false,
-});
+const { data: filteredPiecesData } = await useAsyncDataPiecesCollection();
+
+const { data: cadencesData } = await useAsyncData('cadences', () => queryCollection('cadences').all());
 
 const localePath = useLocalePath();
 
-const { loadScoreData } = useScoreFormatter();
+const cadences = cadencesData.value;
 
-const cadences = cadencesData.value.cadences;
+const cadencesForPieceFilter = computed(() => {
+    return cadencesData.value.filter(c => filteredPiecesData.value ? filteredPiecesData.value.map(p => p.slug).includes(c.pieceId) : true);
+});
 
 const uniqueTags = [...new Set(cadences.flatMap(cadence => cadence.tags || []))].toSorted();
 
@@ -15,12 +17,16 @@ const uniqueDegs = [...new Set(cadences.map(cadence => cadence.deg))].toSorted()
 
 const uniqueEndBassDegs = [...new Set(cadences.map(cadence => cadence.endBassDeg))].toSorted();
 
-const { filters, filteredCadences, resetFilters } = useCadenceFilter(cadences);
+const { filters, filteredCadences, resetFilters } = useCadenceFilter(cadencesForPieceFilter);
 </script>
 
 <template>
     <UContainer>
         <Heading>{{ $t('cadences') }}</Heading>
+
+        <div class="my-4">
+            <PieceFilterModal />
+        </div>
 
         <UCard>
             <template #header>
@@ -51,19 +57,20 @@ const { filters, filteredCadences, resetFilters } = useCadenceFilter(cadences);
         </div>
 
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div v-for="cadence in filteredCadences" :key="`${cadence.pieceId}-${cadence.startBeat}`">
+            <div v-for="cadence in filteredCadences" :key="`${cadence.pieceId}-${cadence.startLine}-${cadence.endLine}`">
                 <UCard class="h-full">
                     <template #header>
                         <NuxtLink :to="localePath({ name: 'piece-id', params: { id: cadence.pieceId } })">
                             {{ `${cadence.pieceId} ${cadence.startLine}-${cadence.endLine}` }}
                         </NuxtLink>
                     </template>
-                    <VerovioCanvas view-mode="horizontal" :data="loadScoreData(cadence.pieceId, [], [
+                    <HighlightedScore view-mode="horizontal" :piece-id="cadence.pieceId" :filters="[
                         `myank -l ${cadence.startLine}-${cadence.endLine}`,
                         `shed -e 's/fb/fba/gX'`,
                         `shed -e 's/^([A-Ha-h\#\-]+):$/${cadence.key}:/gI'`,
                         'deg -k1 -t --box',
-                    ])" :scale="35" :options="{
+                    ]" :verovio-options="{
+                        scale: 35,
                         pageMarginLeft: 42,
                     }" />
                     <dl class="grid grid-cols-[auto_1fr] gap-x-4 mt-4">
