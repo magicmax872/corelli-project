@@ -1,9 +1,11 @@
 composer: Arcangelo Corelli
-key: null
+key: a
 largerWorkTitle: Sonata da chiesa
-majorMinor: major
-meter: 4/4
-movementDesignation: Presto
+majorMinor: minor
+meter:
+    - 4/4
+movementDesignation:
+    - Presto
 mv: 4
 nr: 4
 op: 1

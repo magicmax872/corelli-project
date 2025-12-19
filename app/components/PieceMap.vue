@@ -18,7 +18,7 @@ const modulationsGroupedByKey = computed(() => {
     }, {}));
 });
 
-const maxBeat = props.modulations[props.modulations.length - 1].endBeat;
+const maxBeat = Math.max(...props.modulations.map(m => m.endBeat));
 
 function getWidth(startBeat, endBeat) {
     return (endBeat - startBeat) / maxBeat * 100;
@@ -45,8 +45,10 @@ function getLeft(startBeat) {
                         sideOffset: 8
                     }"
                 >
-                    <div class="w-full h-full bg-primary/20 border-primary/40 border rounded px-2 flex items-center hover:bg-primary/50 hover:border-primary/60 hover:shadow">
-                        {{ group[0] }}
+                    <div class="w-full h-full bg-primary/20 border-primary/40 border rounded flex items-center hover:bg-primary/50 hover:border-primary/60 hover:shadow">
+                        <div class="px-2">
+                            {{ group[0] }}
+                        </div>
                     </div>
                 </UTooltip>
             </div>

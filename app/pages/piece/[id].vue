@@ -7,11 +7,11 @@ const localePath = useLocalePath();
 const { params: { id } } = useRoute();
 const { data: piece } = await useAsyncData(`pieces/${id}`, () => queryCollection('pieces').where('stem', '=', `pieces/${id}`).first());
 const { data: cadencesData } = await useAsyncData(`cadences/piece/${id}`, () => queryCollection('cadences').where('pieceId', '=', id).all());
-const { data: modulationsData } = await useAsyncData(`modulations`, () => queryCollection('modulations').first());
+const { data: modulationsData } = await useAsyncData(`modulations/piece/${id}`, () => queryCollection('modulations').where('pieceId', '=', id).all());
 const { data: sequencesData } = await useAsyncData(`sequences`, () => queryCollection('sequences').first());
 
 const cadences = cadencesData.value;
-const modulations = modulationsData.value.modulations.filter(m => m.pieceId === id);
+const modulations = modulationsData.value;
 const sequences = sequencesData.value.sequences.filter(s => s.pieceId === id);
 
 if (!piece.value) {
@@ -176,6 +176,10 @@ function downloadAnnotationsFile() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 }
+
+function copyJsonToClipboard() {
+    copy(editedAnnotationsString.value);
+}
 </script>
 
 <template>
@@ -186,7 +190,7 @@ function downloadAnnotationsFile() {
                     {{ `${piece.largerWorkTitle} Op. ${piece.op} №${piece.nr}` }}
                     <div class="text-2xl flex gap-2">
                         <div>
-                            {{ `${piece.mv}. ${piece.body.title ? `${piece.title}: ` : ''} ${piece.movementDesignation}`}}
+                            {{ `${piece.mv}. ${piece.body.title ? `${piece.title}: ` : ''} ${piece.movementDesignation.filter((value, index, array) => index === 0 || value !== array[index - 1]).slice(0, 2).join(', ')}`}}
                         </div>
                         <div class="flex items-center">
                             <UBadge color="neutral" size="sm" variant="outline" class="font-mono cursor-pointer select-none w-[11ch] inline-flex items-center justify-center text-center" @click="copyId" :label="copied ? $t('copied') : id" />
@@ -198,12 +202,20 @@ function downloadAnnotationsFile() {
                 </Heading>
                 <div class="flex gap-2">
                     <UButton :disabled="!prevPiece" :to="localePath({ name: 'piece-id', params: { id: prevPiece?.slug }, hash: $route.hash })" size="xs">
-                        <Icon name="heroicons:arrow-left-circle" class="text-xl" />
+                        <template #leading>
+                            <UKbd color="neutral">
+                                <UIcon name="lucide:arrow-left" />
+                            </UKbd>
+                        </template>
                         {{ $t('previous') }}
                     </UButton>
                     <UButton :disabled="!nextPiece" :to="localePath({ name: 'piece-id', params: { id: nextPiece?.slug }, hash: $route.hash })" size="xs">
                         {{ $t('next') }}
-                        <Icon name="heroicons:arrow-right-circle" class="text-xl" />
+                        <template #trailing>
+                            <UKbd color="neutral">
+                                <UIcon name="lucide:arrow-right" />
+                            </UKbd>
+                        </template>
                     </UButton>
                     <PieceFilterModal @after:leave="redirectToFirstFilteredPiece" />
                 </div>
@@ -311,13 +323,20 @@ function downloadAnnotationsFile() {
                             </template>
                         </UTabs>
                     </div>
-                    <div>
+                    <UCard>
                         <div class="flex gap-2 flex-wrap justify-end mb-4">
                             <UButton @click="downloadAnnotationsFile" :label="$t('downloadAnnotationsFile')" />
                             <UButton :to="githubIssueUrl" target="_blank" :label="$t('createGithubIssue')" />
                         </div>
-                        <pre v-text="editedAnnotationsString" class="text-xs max-h-100 overflow-x-auto bg-gray-50 rounded p-4"></pre>
-                    </div>
+                        <div class="relative">
+                            <div class="absolute right-4 top-2">
+                                <UTooltip :text="$t('copied')" :open="copied">
+                                    <UButton icon="lucide:copy" @click="copyJsonToClipboard" size="xs" color="neutral" variant="soft" />
+                                </UTooltip>
+                            </div>
+                            <pre v-text="editedAnnotationsString" class="text-xs max-h-100 overflow-x-auto scrollbar-gutter-stable bg-gray-50 rounded p-4"></pre>
+                        </div>
+                    </UCard>
                 </div>
             </div>
 

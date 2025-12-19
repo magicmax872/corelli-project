@@ -1,9 +1,11 @@
 composer: Arcangelo Corelli
-key: null
+key: e
 largerWorkTitle: Sonata da chiesa
-majorMinor: major
-meter: 3/4
-movementDesignation: Adagio
+majorMinor: minor
+meter:
+    - 3/4
+movementDesignation:
+    - Adagio
 mv: 3
 nr: 2
 op: 1

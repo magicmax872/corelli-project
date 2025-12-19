@@ -1,9 +1,11 @@
 composer: Arcangelo Corelli
-key: null
+key: A
 largerWorkTitle: Sonata da chiesa
 majorMinor: major
-meter: 3/4
-movementDesignation: Allegro
+meter:
+    - 3/4
+movementDesignation:
+    - Allegro
 mv: 4
 nr: 3
 op: 1
