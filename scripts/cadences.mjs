@@ -32,7 +32,15 @@ getFiles(pathToKernScores).forEach(file => {
     
     console.log(`✅ Cadences found for ${id}`);
 
-    const kern = execSync(`cat ${file} | lnnr | beat -ca | meter | degx --resolve-null -t`).toString().trim();
+    const kernScore = fs.readFileSync(file, 'utf8');
+
+    const kern = execSync(`lnnr | beat -ca | meter | degx --resolve-null -t`, {
+        input: kernScore,
+    }).toString().trim();
+
+    const meterMatches = kernScore.match(/\*M(\d+\/\d+)/)
+
+    const meter = meterMatches ? meterMatches[1] : null;
 
     const newCadences = pieceCadences.map(([a, b, tags]) => ({
         tags: tags == null ? [] : [].concat(tags),
@@ -126,7 +134,8 @@ getFiles(pathToKernScores).forEach(file => {
 
             if (currentMeasure === start.measure && currentBeat === start.beat) {
                 newCadences[cadenceIndex].startLine = currentLineNumber;
-                newCadences[cadenceIndex].startBeat = currentAbsb;
+                newCadences[cadenceIndex].startBeat = currentAbsb; 
+                newCadences[cadenceIndex].meter = meter;
             }
             
             if (currentMeasure === end.measure && currentBeat === end.beat) {
